@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="search-box">
+    <input type="text" id="searchInput" class="search-input" 
+           placeholder="Search bookmarks by title, URL, or tags..." 
+           value="{{ search_query or '' }}">
+</div>
+
+<div class="card">
+    <h2 style="margin-bottom: 1rem;">Add New Bookmark</h2>
+    <form id="bookmarkForm" method="POST" action="{{ url_for('add_bookmark') }}">
+        <div class="form-group">
+            <input type="text" name="title" class="form-control" placeholder="Title (e.g., Google)" required>
+        </div>
+        
+        <div class="form-group">
+            <input type="url" name="url" id="url" class="form-control" 
+                   placeholder="URL (e.g., https://google.com)" required>
+        </div>
+        
+        <div class="form-group">
+            <input type="text" name="tags" class="form-control" 
+                   placeholder="Tags (comma separated, e.g., search, tools)">
+        </div>
+        
+        <button type="submit" class="btn">Save Bookmark</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2 style="margin-bottom: 1rem;">Your Bookmarks</h2>
+    
+    {% if bookmarks %}
+        <div class="bookmark-list">
+            {% for bookmark in bookmarks %}
+                <div class="bookmark-item">
+                    <div class="bookmark-title">{{ bookmark.title }}</div>
+                    <div class="bookmark-url">
+                        <a href="{{ bookmark.url }}" target="_blank" rel="noopener noreferrer">
+                            {{ bookmark.url }}
+                        </a>
+                    </div>
+                    {% if bookmark.tags %}
+                        <div class="bookmark-tags">Tags: {{ bookmark.tags }}</div>
+                    {% endif %}
+                    <div style="margin-top: 0.5rem; font-size: 0.875rem; color: #718096;">
+                        Added: {{ bookmark.created_at }}
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        <a href="{{ url_for('delete_bookmark', bookmark_id=bookmark.id) }}" 
+                           class="btn btn-danger" 
+                           onclick="return confirm('Delete this bookmark?')">
+                            Delete
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p style="text-align: center; color: #718096; padding: 2rem;">
+            {% if search_query %}
+                No bookmarks found for "{{ search_query }}"
+            {% else %}
+                No bookmarks yet. Add your first one above!
+            {% endif %}
+        </p>
+    {% endif %}
+</div>
+{% endblock %}

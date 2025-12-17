@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="card">
+        <h1 style="text-align: center; margin-bottom: 2rem; color: #667eea;">
+            📚 Bookmark Manager
+        </h1>
+        <p style="text-align: center; margin-bottom: 2rem; color: #4a5568;">
+            A simple, secure way to save and organize your favorite links.
+            Never lose important bookmarks again!
+        </p>
+        
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="{{ url_for('auth.register') }}" class="btn" style="margin-right: 10px;">
+                Get Started
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="btn">
+                Login
+            </a>
+        </div>
+        
+        <div style="margin-top: 3rem;">
+            <h3>Features:</h3>
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 0.5rem 0;">✅ Secure user accounts</li>
+                <li style="padding: 0.5rem 0;">✅ Organize with tags</li>
+                <li style="padding: 0.5rem 0;">✅ Fast search</li>
+                <li style="padding: 0.5rem 0;">✅ Mobile-friendly</li>
+                <li style="padding: 0.5rem 0;">✅ Completely free</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
