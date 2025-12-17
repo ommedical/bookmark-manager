@@ -1,24 +1,19 @@
 import sqlite3
-from flask import g
 import os
 from config import Config
 
-def get_db():
-    if 'db' not in g:
-        g.db = sqlite3.connect(Config.DATABASE)
-        g.db.row_factory = sqlite3.Row
-    return g.db
-
-def close_db(e=None):
-    db = g.pop('db', None)
-    if db is not None:
-        db.close()
+def get_db_connection():
+    """Get a database connection (no Flask context needed)"""
+    conn = sqlite3.connect(Config.DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def init_db():
-    db = get_db()
+    """Initialize database tables"""
+    conn = get_db_connection()
     
     # Users table
-    db.execute('''
+    conn.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
@@ -28,7 +23,7 @@ def init_db():
     ''')
     
     # Bookmarks table
-    db.execute('''
+    conn.execute('''
         CREATE TABLE IF NOT EXISTS bookmarks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -41,7 +36,23 @@ def init_db():
     ''')
     
     # Create indexes for better performance
-    db.execute('CREATE INDEX IF NOT EXISTS idx_user_id ON bookmarks(user_id)')
-    db.execute('CREATE INDEX IF NOT EXISTS idx_created_at ON bookmarks(created_at DESC)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_user_id ON bookmarks(user_id)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_created_at ON bookmarks(created_at DESC)')
     
-    db.commit()
+    conn.commit()
+    conn.close()
+
+# For Flask context usage (backward compatibility)
+def get_db():
+    """Get database connection within Flask context"""
+    from flask import g
+    if not hasattr(g, 'db'):
+        g.db = get_db_connection()
+    return g.db
+
+def close_db(e=None):
+    """Close database connection"""
+    from flask import g
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()

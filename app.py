@@ -1,29 +1,43 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import LoginManager, login_required, current_user
-from database import init_db, get_db
-from auth import auth_bp
+from database import init_db, get_db, close_db, get_db_connection
 import os
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['SESSION_TYPE'] = 'filesystem'
 
-# Initialize database
+# Initialize database before app context
 init_db()
 
-# Register authentication blueprint
-app.register_blueprint(auth_bp)
+# Register close_db to be called when app context ends
+app.teardown_appcontext(close_db)
 
 # Login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 
+# Import after app creation to avoid circular imports
+from auth import auth_bp
 from models import User
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.get(user_id)
+    # Use direct connection for login manager
+    conn = get_db_connection()
+    user = conn.execute(
+        'SELECT * FROM users WHERE id = ?', (user_id,)
+    ).fetchone()
+    conn.close()
+    
+    if not user:
+        return None
+    
+    return User(id=user['id'], username=user['username'], password_hash=user['password_hash'])
+
+# Register authentication blueprint
+app.register_blueprint(auth_bp)
 
 @app.route('/')
 def index():

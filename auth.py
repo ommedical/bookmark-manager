@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required
-from database import get_db
-from models import User
+from database import get_db_connection
 import argon2
 
 auth_bp = Blueprint('auth', __name__)
@@ -32,24 +31,26 @@ def register():
             flash('Password must be at least 6 characters!', 'error')
             return redirect(url_for('auth.register'))
         
-        db = get_db()
+        conn = get_db_connection()
         
         # Check if user exists
-        existing_user = db.execute(
+        existing_user = conn.execute(
             'SELECT id FROM users WHERE username = ?', (username,)
         ).fetchone()
         
         if existing_user:
+            conn.close()
             flash('Username already exists!', 'error')
             return redirect(url_for('auth.register'))
         
         # Create new user
         password_hash = hash_password(password)
-        db.execute(
+        conn.execute(
             'INSERT INTO users (username, password_hash) VALUES (?, ?)',
             (username, password_hash)
         )
-        db.commit()
+        conn.commit()
+        conn.close()
         
         flash('Registration successful! Please login.', 'success')
         return redirect(url_for('auth.login'))
@@ -62,6 +63,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         
+        from models import User
         user = User.get_by_username(username)
         
         if user and user.verify_password(password):

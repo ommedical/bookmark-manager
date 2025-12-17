@@ -1,6 +1,5 @@
 from flask_login import UserMixin
-from database import get_db
-from auth import verify_password
+from database import get_db_connection
 
 class User(UserMixin):
     def __init__(self, id, username, password_hash):
@@ -10,10 +9,11 @@ class User(UserMixin):
     
     @staticmethod
     def get(user_id):
-        db = get_db()
-        user = db.execute(
+        conn = get_db_connection()
+        user = conn.execute(
             'SELECT * FROM users WHERE id = ?', (user_id,)
         ).fetchone()
+        conn.close()
         
         if not user:
             return None
@@ -22,10 +22,11 @@ class User(UserMixin):
     
     @staticmethod
     def get_by_username(username):
-        db = get_db()
-        user = db.execute(
+        conn = get_db_connection()
+        user = conn.execute(
             'SELECT * FROM users WHERE username = ?', (username,)
         ).fetchone()
+        conn.close()
         
         if not user:
             return None
@@ -33,4 +34,6 @@ class User(UserMixin):
         return User(id=user['id'], username=user['username'], password_hash=user['password_hash'])
     
     def verify_password(self, password):
+        # Import here to avoid circular import
+        from auth import verify_password
         return verify_password(self.password_hash, password)
